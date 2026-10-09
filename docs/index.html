@@ -133,7 +133,7 @@ const wTot = D.hist.counts.insider.reduce((a,b)=>a+b,0)+D.hist.counts.independen
 // tiles
 const wavg = (rows,k) => { const t = rows.reduce((a,r)=>a+r.tokens,0); return rows.reduce((a,r)=>a+(r[k]||0)*r.tokens,0)/t; };
 const share = (rows,k) => { const t = rows.reduce((a,r)=>a+(r.realised_profit_total||0),0); return rows.reduce((a,r)=>a+(r[k]||0)*(r.realised_profit_total||0),0)/t; };
-const indC = D.hist.counts.independent, bins = D.hist.bins; const indProf = indC.reduce((a,c,i)=>a+(bins[i]>=0?c:0),0)/indC.reduce((a,b)=>a+b,0)*100;
+const indC = D.hist.counts.independent, bins = D.hist.bins; const indProf = 20.1; /* wallets with realised P&L > 0, from wallets_sol.csv.gz */
 const tiles = [
   ['ins', pct(share(sol,'profit_share_insider_any')), 'of realised Solana profit went to insiders', 'volume-weighted, '+sol.length+' launch days'],
   ['', pct(wavg(sol,'pct_bundled_launch')), 'of pump.fun launches were bundled in their first block', 'Robinhood Chain: '+pct(wavg(rh,'pct_bundled_launch'))],
