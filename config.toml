@@ -1,0 +1,62 @@
+# memescope — memecoin wallet forensics collectors (research only; never trades, never signs anything)
+# Keys come from environment variables, never from this file:
+#   HELIUS_API_KEY      (Solana)            -> setx HELIUS_API_KEY "..."
+#   BLOCKSCOUT_API_KEY  (Robinhood Chain)   -> setx BLOCKSCOUT_API_KEY "proapi_..."   (free key: dev.blockscout.com)
+
+[run]
+loop_minutes = 60            # collect.bat repeats a pass this often (leave the window open, like the bot)
+data_dir = "data"
+
+[solana]
+rpc = "https://mainnet.helius-rpc.com/?api-key={key}"
+rps = 8                      # free tier allows 10/s
+daily_credits = 20000        # free tier = 1M credits/month: history 20k + trace 12k per day stays inside it
+pump_program = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+pump_mint_authority = "TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM"   # appears in every pump.fun create tx
+sample_per_hour = 12         # random launches sampled per hour of launch time (~290/day)
+min_age_hours = 6            # fetch a token's history once it is this old (most coins are dead by then)
+max_age_hours = 30           # don't sample launches older than this
+max_tx_per_token = 3000      # cap for the rare big coins (flagged as truncated); the EARLIEST txs are kept
+max_sig_pages = 30           # getSignaturesForAddress pages (1,000 each) when the cheap bulk method is unavailable
+fetch_per_pass = 40          # tokens fetched per hourly pass (keeps discovery fresh and other chain unblocked)
+use_get_transactions_for_address = true   # 0.1 credit/tx if the free tier allows it; falls back to getTransaction (1 credit/tx)
+
+[solana.trace]               # follow the money: who funded the creator/early buyers/top sellers, and where profits went
+enabled = true
+daily_credits = 12000        # separate cap for tracing
+trace_fraction = 0.35        # share of fetched tokens traced at random...
+trace_if_proceeds_over = 5.0 # ...plus every token where one wallet took out >= this many SOL (where the money was made)
+early_buyers = 10
+top_sellers = 5
+max_hops = 3                 # funding hops back from each wallet (stops early at exchanges/bridges/busy wallets)
+hub_pages = 2                # a wallet with more than 2 x 1000 transactions is treated as a hub, not expanded
+forward_txs = 5              # newest transactions checked for where profits were sent
+
+[robinhood]
+api = "https://api.blockscout.com/v2/api?chainid=4663"
+rps = 4                      # free tier allows 5/s
+daily_credits = 70000        # free tier = 100k/day (history 70k + trace 15k)
+# Pons launch factories (sources disagree; the probe checks which are live). topic0 = TokenLaunched
+factories = [
+  { address = "0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e", topic0 = "0x8d4aad4953d0ca700d468f3753aa14432d1b35b43ec6409f051fb6aa43a89607", src = "bitquery v2" },
+  { address = "0xA5aAb3F0c6EeadF30Ef1D3Eb997108E976351feB", topic0 = "0xdb51ea9ad51ab453a65a4cb7e60c3cb378c9501bb002609f8f97778fb6c4235a", src = "mobula active" },
+]
+sample_per_hour = 12
+min_age_hours = 6
+max_age_hours = 30
+max_transfers_per_token = 5000
+max_graduated_tx_details = 50    # per-tx lookups after graduation (Uniswap v4), capped. Was 300: each lookup costs 60 credits, so 3 big tokens/day ate ~54k of the 70k budget and the RH queue grew ~200/day (9 Oct)
+detail_workers = 6               # lookups in flight at once (REST is slow per call; rps cap above still applies)
+fetch_per_pass = 40
+rest = "https://api.blockscout.com/4663/api/v2/"
+
+[robinhood.trace]
+enabled = true
+daily_credits = 15000
+trace_fraction = 0.35
+trace_if_proceeds_over = 1.0 # ETH
+early_buyers = 10
+top_sellers = 5
+max_hops = 3
+hub_tx_count = 20000         # wallets with more transactions than this (or real contracts) are hubs: bridges, exchanges, routers
+forward_txs = 10

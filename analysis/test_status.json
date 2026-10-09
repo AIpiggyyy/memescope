@@ -1,0 +1,7 @@
+{
+ "rule": "README decision rule (pre-registered 7 Oct 2026); Solana only",
+ "days_of_data": 3,
+ "first_day": "20261006",
+ "ready": false,
+ "status": "waiting for 28+ full days of launches"
+}
